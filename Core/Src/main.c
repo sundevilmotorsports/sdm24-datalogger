@@ -90,7 +90,22 @@ void INA260_WriteRegister(uint8_t reg, uint16_t data) {
 
 void INA_260_ReadRegister(uint8_t reg, uint16_t *data) {
 	HAL_I2C_Master_Transmit(&hi2c2, INA260_ADDRESS << 1, &reg, 1, HAL_MAX_DELAY);
+
+
 	HAL_I2C_Master_Receive(&hi2c2, (INA260_ADDRESS << 1) | 1, (uint8_t *)data, 2, HAL_MAX_DELAY);
+}
+
+float getAnalog(uint8_t channel) {
+	uint8_t buffer[2];
+	uint8_t channel_shifted = channel << 3;
+
+	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_1, GPIO_PIN_RESET);
+	HAL_SPI_Transmit(&hspi4, &channel_shifted, 1, HAL_MAX_DELAY);
+	HAL_Delay(1);
+	HAL_SPI_Receive(&hspi4, (uint8_t *)buffer, 2, HAL_MAX_DELAY);
+	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_1, GPIO_PIN_SET);
+
+    return (float)((buffer[0] << 4) | (buffer[1] >> 4));
 }
 
 float getVoltage(void) {
@@ -160,6 +175,7 @@ int main(void)
   {
 	  float voltage = getVoltage();
 	  float current = getCurrent();
+	  float analog = getAnalog(0);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
